@@ -121,7 +121,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     // reload the previous one. This is far from perfect but definitely improves the current behaviour.
     private fun retrieveAutoSaveData(): SaveState? {
         if (intent.getBooleanExtra(EXTRA_LOAD_AUTOSAVE, false)) {
-            return getAndResetTransientQuickSave() ?: statesManager.getAutoSave(game, system).blockingGet()
+            return getAndResetTransientQuickSave() ?: statesManager.getAutoSave(game, system)
+                .blockingGet()
         }
         return null
     }
@@ -150,27 +151,31 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             ?.subscribe()
     }
 
-    private fun initializeRetroGameView(directoriesManager: DirectoriesManager, screenFilter: String) {
+    private fun initializeRetroGameView(
+        directoriesManager: DirectoriesManager,
+        screenFilter: String
+    ) {
         retroGameView = GLRetroView(
-                this,
-                intent.getStringExtra(EXTRA_CORE_PATH)!!,
-                intent.getStringExtra(EXTRA_GAME_PATH)!!,
-                directoriesManager.getSystemDirectory().absolutePath,
-                directoriesManager.getSavesDirectory().absolutePath,
-                getShaderForSystem(screenFilter, system)
+            this,
+            intent.getStringExtra(EXTRA_CORE_PATH)!!,
+            intent.getStringExtra(EXTRA_GAME_PATH)!!,
+            directoriesManager.getSystemDirectory().absolutePath,
+            directoriesManager.getSavesDirectory().absolutePath,
+            getShaderForSystem(screenFilter, system)
         )
         retroGameView?.isFocusable = false
         retroGameView?.isFocusableInTouchMode = false
         retroGameView?.onCreate()
 
-        val coreVariables = intent.getSerializableExtra(EXTRA_CORE_VARIABLES) as Array<CoreVariable>? ?: arrayOf()
+        val coreVariables = intent.getSerializableExtra(EXTRA_CORE_VARIABLES) as Array<CoreVariable>?
+            ?: arrayOf()
         updateCoreVariables(coreVariables.toList())
 
         gameViewLayout.addView(retroGameView)
 
         val layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
         )
         layoutParams.gravity = Gravity.CENTER
 
@@ -244,10 +249,10 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             .subscribe { loadingView.setVisibleOrGone(it) }
 
         coreVariablesManager.getCoreOptionsForSystem(system)
-                .autoDispose(scope())
-                .subscribeBy({}) {
-                    onVariablesRead(it)
-                }
+            .autoDispose(scope())
+            .subscribeBy({}) {
+                onVariablesRead(it)
+            }
 
         retroGameView?.onResume()
         wifiMapper?.setupWiFiPad(retroGameView)
@@ -313,7 +318,12 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         val gamePadShortcut = getGamePadMenuShortCutObservable()
             .distinctUntilChanged()
             .doOnNext {
-                displayToast(resources.getString(R.string.game_toast_settings_button_using_gamepad, it.label))
+                displayToast(
+                    resources.getString(
+                        R.string.game_toast_settings_button_using_gamepad,
+                        it.label
+                    )
+                )
             }
 
         val firstPlayerPressedKeys = keyEventsSubjects
@@ -399,13 +409,42 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     }
 
     private fun sendSeparateMotionEvents(event: MotionEvent, port: Int) {
-        sendMotionEvent(event, MOTION_SOURCE_DPAD, MotionEvent.AXIS_HAT_X, MotionEvent.AXIS_HAT_Y, port)
-        sendMotionEvent(event, MOTION_SOURCE_ANALOG_LEFT, MotionEvent.AXIS_X, MotionEvent.AXIS_Y, port)
-        sendMotionEvent(event, MOTION_SOURCE_ANALOG_RIGHT, MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ, port)
+        sendMotionEvent(
+            event,
+            MOTION_SOURCE_DPAD,
+            MotionEvent.AXIS_HAT_X,
+            MotionEvent.AXIS_HAT_Y,
+            port
+        )
+        sendMotionEvent(
+            event,
+            MOTION_SOURCE_ANALOG_LEFT,
+            MotionEvent.AXIS_X,
+            MotionEvent.AXIS_Y,
+            port
+        )
+        sendMotionEvent(
+            event,
+            MOTION_SOURCE_ANALOG_RIGHT,
+            MotionEvent.AXIS_Z,
+            MotionEvent.AXIS_RZ,
+            port
+        )
     }
 
-    private fun sendMotionEvent(event: MotionEvent, source: Int, xAxis: Int, yAxis: Int, port: Int) {
-        retroGameView?.sendMotionEvent(source, event.getAxisValue(xAxis), event.getAxisValue(yAxis), port)
+    private fun sendMotionEvent(
+        event: MotionEvent,
+        source: Int,
+        xAxis: Int,
+        yAxis: Int,
+        port: Int
+    ) {
+        retroGameView?.sendMotionEvent(
+            source,
+            event.getAxisValue(xAxis),
+            event.getAxisValue(yAxis),
+            port
+        )
     }
 
     override fun onGenericMotionEvent(event: MotionEvent?): Boolean {
@@ -441,7 +480,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             }
     }
 
-    private fun getDevicePort(inputEvent: InputEvent) = (inputEvent.device?.controllerNumber ?: 0) - 1
+    private fun getDevicePort(inputEvent: InputEvent) =
+        (inputEvent.device?.controllerNumber ?: 0) - 1
 
     override fun onBackPressed() {
         if (loading) return
@@ -518,9 +558,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     private fun loadSaveState(saveState: SaveState): Boolean {
         val retroGameView = retroGameView ?: return false
-        if (system.hasMultiDiskSupport
-            && retroGameView.getAvailableDisks() > 1
-            && retroGameView.getCurrentDisk() != saveState.metadata.diskIndex
+        if (system.hasMultiDiskSupport &&
+            retroGameView.getAvailableDisks() > 1 &&
+            retroGameView.getCurrentDisk() != saveState.metadata.diskIndex
         ) {
             retroGameView.changeDisk(saveState.metadata.diskIndex)
         }
@@ -570,6 +610,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
         private var transientStashedState: SaveState? = null
         private var transientSRAMState: ByteArray? = null
+
         /** A full savestate may not fit a bundle, so we need to ask for forgiveness and pass it statically. */
         fun setTransientQuickSave(state: SaveState?) {
             transientStashedState = state
