@@ -1,12 +1,12 @@
 package com.swordfish.lemuroid.app.mobile.feature.settings
 
+import android.Manifest
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.text.Html
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
+import android.view.*
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.Observer
@@ -15,11 +15,14 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.f2prateek.rx.preferences2.RxSharedPreferences
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.shared.library.LibraryIndexWork
 import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDispose
+import com.zeerooo.wifi.util.WiFiMapper
 import dagger.android.support.AndroidSupportInjection
 import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
@@ -97,6 +100,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.pref_key_extenral_folder) -> handleChangeExternalFolder()
             getString(R.string.pref_key_open_gamepad_bindings) -> handleOpenGamepadBindings()
             getString(R.string.pref_key_display_bios_info) -> handleDisplayBiosInfo()
+            "get_esp_ip" -> WiFiMapper(context).getEspIp(activity)
+            "set_esp_wifi_credentials" -> setEspCredentials(preference.sharedPreferences.getString("esp_ip", "0.0.0.0"))
         }
         return super.onPreferenceTreeClick(preference)
     }
@@ -115,6 +120,38 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun handleRescan() {
         context?.let { LibraryIndexWork.enqueueUniqueWork(it) }
+    }
+
+
+    private fun setEspCredentials(espIp: String?) {
+        activity?.let {
+            val wiFiMapper = WiFiMapper(context)
+
+            val alertDialog: AlertDialog = MaterialAlertDialogBuilder(it, R.style.ThemeOverlay_MaterialComponents_Dialog_Alert).create()
+
+            val view: View = layoutInflater.inflate(R.layout.dialog_esp_credentials, null)
+
+            var ssidInputEditText: TextInputEditText = view.findViewById(R.id.wifi_ssid_input)
+            ssidInputEditText?.setOnTouchListener { v, event ->
+                if (event.action == MotionEvent.ACTION_UP)
+                    if (event.rawX >= (ssidInputEditText!!.right - ssidInputEditText!!.compoundDrawables[2].bounds.width())) {
+                        Toast.makeText(it, "Needed to get current Wi-Fi SSID since Oreo. YOU CAN DISABLE IT LATER IN SETTINGS", Toast.LENGTH_LONG).show()
+                        requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 21) // I hate it but seems like the only way to get current WiFi's SSID since Oreo
+                    }
+                false
+            }
+
+            alertDialog.setView(view)
+            alertDialog.setTitle("Send Wi-Fi Credentials")
+            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(android.R.string.ok)) { dialogInterface, i ->
+                run {
+                    wiFiMapper.sendData("cred" + ssidInputEditText?.text.toString() + '%' + (view.findViewById(R.id.wifi_password_input) as TextInputEditText).text + ';', espIp)
+                    Toast.makeText(it, "You CAN DISABLE GPS permission in settings", Toast.LENGTH_LONG).show()
+                    wiFiMapper.dispose()
+                }
+            }
+            alertDialog.show()
+        }
     }
 
     @dagger.Module

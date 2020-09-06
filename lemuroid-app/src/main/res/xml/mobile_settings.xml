@@ -80,4 +80,29 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="@string/settings_category_wifi"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="set_esp_wifi_credentials"
+            android:persistent="false"
+            android:summary="@string/settings_description_set_esp_wifi_credentials"
+            android:title="@string/settings_title_set_esp_wifi_credentials"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="get_esp_ip"
+            android:persistent="false"
+            android:summary="@string/settings_description_get_esp_ip"
+            android:title="@string/settings_title_get_esp_ip"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="enable_virtual_gamepad"
+            android:title="@string/settings_title_enable_virtual_gamepad"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

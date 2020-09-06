@@ -26,6 +26,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.PopupWindow
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.preference.PreferenceManager
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.mobile.feature.gamemenu.GameMenuActivity
 import com.swordfish.touchinput.radial.VirtualGamePadCustomizer
@@ -88,25 +89,33 @@ class GameActivity : BaseGameActivity() {
     private fun setupVirtualPad(system: GameSystem) {
         virtualGamePad = GamePadFactory.createRadialGamePad(this, system.id, settingsManager.vibrateOnTouch)
 
-        overlayLayout.addView(virtualGamePad)
+        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("enable_virtual_gamepad", true)) {
+            overlayLayout.addView(virtualGamePad)
 
-        virtualGamePad.getEvents()
-            .autoDispose(scope())
-            .subscribe {
-                when (it) {
-                    is Event.Gesture -> { handleGamePadGesture(it) }
-                    is Event.Button -> { handleGamePadButton(it) }
-                    is Event.Direction -> { handleGamePadDirection(it) }
-                }
-            }
+            virtualGamePad.getEvents()
+                    .autoDispose(scope())
+                    .subscribe {
+                        when (it) {
+                            is Event.Gesture -> {
+                                handleGamePadGesture(it)
+                            }
+                            is Event.Button -> {
+                                handleGamePadButton(it)
+                            }
+                            is Event.Direction -> {
+                                handleGamePadDirection(it)
+                            }
+                        }
+                    }
 
-        lifecycle.addObserver(virtualGamePad)
+            lifecycle.addObserver(virtualGamePad)
 
-        gamePadManager
-            .getGamePadsObservable()
-            .map { it.size }
-            .autoDispose(scope())
-            .subscribeBy(Timber::e) { overlayLayout.setVisibleOrGone(it == 0) }
+            gamePadManager
+                    .getGamePadsObservable()
+                    .map { it.size }
+                    .autoDispose(scope())
+                    .subscribeBy(Timber::e) { overlayLayout.setVisibleOrGone(it == 0) }
+        }
     }
 
     private fun handleGamePadGesture(it: Event.Gesture) {

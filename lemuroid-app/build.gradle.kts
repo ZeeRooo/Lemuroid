@@ -84,6 +84,7 @@ dependencies {
     implementation(project(":lemuroid-metadata-libretro-db"))
     implementation(project(":lemuroid-touchinput"))
     implementation(project(":lemuroid-cores"))
+    implementation(project(":lemuroid-espcontroller"))
     "freeImplementation"(project(":lemuroid-app-ext-free"))
     "playImplementation"(project(":lemuroid-app-ext-play"))
 

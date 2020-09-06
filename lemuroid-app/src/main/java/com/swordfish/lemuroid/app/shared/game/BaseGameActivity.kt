@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.preference.PreferenceManager
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.PublishRelay
 import com.swordfish.lemuroid.R
@@ -40,6 +41,7 @@ import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_DPAD
 import com.swordfish.libretrodroid.Variable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDispose
+import com.zeerooo.wifi.util.WiFiMapper
 import io.reactivex.Completable
 import io.reactivex.Maybe
 import io.reactivex.Observable
@@ -74,6 +76,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     protected var retroGameView: GLRetroView? = null
 
+    private var wifiMapper: WiFiMapper? = null
+
     var loading: Boolean by Delegates.observable(false) { _, _, value ->
         loadingSubject.accept(value)
     }
@@ -89,6 +93,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
         game = intent.getSerializableExtra(EXTRA_GAME) as Game
         system = GameSystem.findById(game.systemId)
+
+        wifiMapper = WiFiMapper(this)
 
         val directoriesManager = DirectoriesManager(applicationContext)
 
@@ -244,6 +250,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 }
 
         retroGameView?.onResume()
+        wifiMapper?.setupWiFiPad(retroGameView)
     }
 
     open fun onVariablesRead(coreVariables: List<CoreVariable>) {
@@ -277,6 +284,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     override fun onPause() {
         retroGameView?.onPause()
+        wifiMapper?.dispose()
         super.onPause()
     }
 

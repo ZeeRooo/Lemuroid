@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title_enable_virtual_gamepad">Enable virtual gamepad</string>
+    <string name="settings_category_wifi">Wi-Fi</string>
+    <string name="settings_title_get_esp_ip">Connect to ESP8266</string>
+    <string name="settings_description_get_esp_ip">Hold \'A\' while the device is starting in order to get controller\'s IP.</string>
+    <string name="settings_title_set_esp_wifi_credentials">Set Wi-Fi credentials</string>
+    <string name="settings_description_set_esp_wifi_credentials">Set Wi-Fi information in order to get ESP8266 connected to your network.\nOtherwise just use it in Access Point mode by holding \'B\' while the device is starting.</string>
+</resources>
